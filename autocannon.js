@@ -48,6 +48,7 @@ module.exports.aggregateResult = function aggregateResult (results, opts = {}) {
 const alias = {
   connections: 'c',
   pipelining: 'p',
+  proxy: 'P',
   timeout: 't',
   duration: 'd',
   sampleInt: 'L',
@@ -98,7 +99,8 @@ const defaults = {
   idReplacement: false,
   excludeErrorStats: false,
   debug: false,
-  workers: 0
+  workers: 0,
+  proxyOptions: { host: '', port: 0 }
 }
 
 function parseArguments (argvs) {
@@ -223,6 +225,18 @@ function parseArguments (argvs) {
       throw new Error(`Failed to load key file: ${err.message}`)
     }
   }
+  if (argv.proxy) {
+    try {
+      const proxyUrl = new URL(`http://${argv.proxy}`)
+
+      // Extract the host and port
+      const host = proxyUrl.hostname
+      const port = Number(proxyUrl.port)
+      argv.proxyOptions = { host, port }
+    } catch (err) {
+      throw new Error(`Failed to parse proxy options: ${err.message}`)
+    }
+  }
 
   if (argv.ca) {
     if (typeof argv.ca === 'string') {
@@ -241,7 +255,6 @@ function parseArguments (argvs) {
   // This is to distinguish down the line whether it is
   // run via command-line or programmatically
   argv[Symbol.for('internal')] = true
-
   return argv
 }
 
@@ -250,7 +263,6 @@ function start (argv) {
     // we are printing the help
     return
   }
-
   if (argv.onPort) {
     if (!hasAsyncHooks()) {
       console.error('The --on-port flag requires the async_hooks builtin module, but it is not available. Please upgrade to Node 8.1+.')
@@ -317,7 +329,7 @@ function createChannel (onport) {
   server.on('close', () => {
     try {
       fs.unlinkSync(socketPath)
-    } catch (err) {}
+    } catch (err) { }
   })
 
   return { socketPath, server }

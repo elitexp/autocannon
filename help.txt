@@ -9,6 +9,8 @@ Available options:
         The number of concurrent connections to use. default: 10.
   -p/--pipelining NUM
         The number of pipelined requests to use. default: 1.
+  -P/--proxy host:port
+        The address and port of the HTTP/S proxy server to be used
   -d/--duration SEC
         The number of seconds to run the autocannon. default: 10.
   -a/--amount NUM
